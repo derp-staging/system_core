@@ -841,9 +841,6 @@ static const char *snet_prop_value[] = {
 };
 
 static void workaround_snet_properties() {
-    // Weaken property override security to set safetynet props
-    weaken_prop_override_security = true;
-
 	std::string error;
 	LOG(INFO) << "snet: Hiding sensitive props";
 
@@ -851,9 +848,6 @@ static void workaround_snet_properties() {
 	for (int i = 0; snet_prop_key[i]; ++i) {
 		PropertySet(snet_prop_key[i], snet_prop_value[i], &error);
 	}
-
-    // Restore the normal property override security after safetynet props have been set
-    weaken_prop_override_security = false;
 }
 
 // If the ro.product.[brand|device|manufacturer|model|name] properties have not been explicitly
@@ -1193,6 +1187,9 @@ void PropertyLoadBootDefaults() {
         }
     }
 
+    // Weaken property override security during execution of the vendor init extension
+    weaken_prop_override_security = true;
+
     // Update with vendor-specific property runtime overrides
     vendor_load_properties();
 
@@ -1207,6 +1204,9 @@ void PropertyLoadBootDefaults() {
 
     // Workaround SafetyNet
     workaround_snet_properties();
+
+    // Restore the normal property override security after init extension is executed
+    weaken_prop_override_security = false;
 }
 
 bool LoadPropertyInfoFromFile(const std::string& filename,
